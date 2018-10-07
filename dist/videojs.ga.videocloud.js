@@ -1,13 +1,16 @@
 /*
-* videojs-ga-videocloud - v0.4.2 - 2016-08-24
+* videojs-ga-videocloud - v0.4.2 - 2018-10-07
 * Based on videojs-ga 0.4.2
-* Copyright (c) 2016 Michael Bensoussan
+* Copyright (c) 2018 Michael Bensoussan
 * Licensed MIT
 */
 (function() {
-  var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+  var registerPlugin,
+    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
-  videojs.plugin('ga', function(options) {
+  registerPlugin = videojs.registerPlugin || videojs.plugin;
+
+  registerPlugin('ga', function(options) {
     var adStateRegex, currentVideo, dataSetupOptions, defaultLabel, defaultsEventsToTrack, end, endTracked, error, eventCategory, eventLabel, eventNames, eventsToTrack, fullscreen, getEventName, isInAdState, loaded, parsedOptions, pause, percentsAlreadyTracked, percentsPlayedInterval, play, player, referrer, resize, seekEnd, seekStart, seeking, sendbeacon, sendbeaconOverride, start, startTracked, timeupdate, tracker, trackerName, volumeChange,
       _this = this;
     if (options == null) {
@@ -21,7 +24,7 @@
     }
     player = this;
     dataSetupOptions = {};
-    if (this.options()["data-setup"]) {
+    if (this.options_["data-setup"]) {
       parsedOptions = JSON.parse(this.options()["data-setup"]);
       if (parsedOptions.ga) {
         dataSetupOptions = parsedOptions.ga;

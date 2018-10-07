@@ -1,7 +1,7 @@
 {
   "name": "videojs-ga-videocloud",
   "description": "Google Analytics plugin for Brightcove Player in Video Cloud",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "license": "MIT",
   "homepage": "https://github.com/BrightcoveOS/videojs-ga-videocloud",
   "repository": {
@@ -28,6 +28,6 @@
     "grunt-contrib-uglify": "^4.0.0"
   },
   "scripts": {
-    "version": "grunt"
+    "version": "grunt && git add -A dist"
   }
 }

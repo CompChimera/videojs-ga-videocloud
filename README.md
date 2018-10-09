@@ -1,3 +1,14 @@
+# Fork for GTM
+
+Extension of GA Plugin for Brightcove to use Google Tag Manager.
+
+Should hopefully be able to use both GA and GTM. 
+
+If 'Google Analytics is not detected':
+  
+
+
+
 # Google Analytics for Brightcove player
 
 Google Analytics plugin for the Brightcove player.

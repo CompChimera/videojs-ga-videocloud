@@ -13,19 +13,19 @@ module.exports = function(grunt) {
             '* Copyright (c) <%= grunt.template.today("yyyy") %> <%= pkg.author.name %>\n' +
             '* Licensed <%= pkg.license %>\n*/',
     clean: {
-      files: ['dist']
+      files: ['demo/js']
     },
     coffee: {
       compile: {
         files: {
-          'dist/videojs.ga.videocloud.js': 'src/videojs.ga.coffee',
+          'demo/js/videojs.ga.videocloud.js': 'src/videojs.ga.coffee',
         }
       }
     },
     uglify: {
       dist: {
-        src: 'dist/videojs.ga.videocloud.js',
-        dest: 'dist/videojs.ga.videocloud.min.js'
+        src: 'demo/js/videojs.ga.videocloud.js',
+        dest: 'demo/js/videojs.ga.videocloud.min.js'
       },
     },
     usebanner: {
@@ -33,6 +33,39 @@ module.exports = function(grunt) {
         options: { banner: '<%= banner %>' },
         files: { src: [ 'dist/*' ] }
       }
+    },
+    // Grunt express - our webserver
+    // https://github.com/blai/grunt-express
+    express: {
+      all: {
+          options: {
+              bases: ['./demo'],
+              port: 9000,
+              livereload: true
+          }
+      }
+    },
+
+    // grunt-watch will monitor the projects files
+    // https://github.com/gruntjs/grunt-contrib-watch
+    watch: {
+      all: {
+              files: 'dist/*',
+              options: {
+                  livereload: true
+          }
+      },
+      js:{
+        files: ["src/*"],
+        tasks: ['clean', 'coffee', 'uglify', 'usebanner']
+      }
+    },
+    // grunt-open will open your browser at the project's URL
+    // https://www.npmjs.org/package/grunt-open
+    open: {
+        all: {
+            path: 'http://localhost:8080/index.html'
+        }
     }
   });
 
@@ -41,8 +74,18 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-coffee');
   grunt.loadNpmTasks('grunt-banner');
+  grunt.loadNpmTasks('grunt-express');
+  grunt.loadNpmTasks('grunt-parallel');
+  grunt.loadNpmTasks('grunt-open');
 
   // Default task.
   grunt.registerTask('default', ['clean', 'coffee', 'uglify', 'usebanner']);
+
+// Creates the `server` task
+grunt.registerTask('server', [
+  'express',
+  'open',
+  'watch'
+  ]);
 
 };

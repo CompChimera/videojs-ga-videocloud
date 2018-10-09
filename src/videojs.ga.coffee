@@ -6,14 +6,14 @@
 # Licensed under the MIT license.
 ##
 
-registerPlugin = videojs.registerPlugin || videojs.plugin;
+videojs.plugin 'ga_gtm', (options = {}) ->
 
 registerPlugin 'ga', (options = {}) ->
 
   referrer = document.createElement('a')
   referrer.href = document.referrer
   if (self != top && window.location.host == 'preview-players.brightcove.net' && referrer.hostname == 'studio.brightcove.com')
-    videojs.log('Google analytics plugin will not track events in Video Cloud Studio')
+    videojs.log('Google analytics - GTM plugin will not track events in Video Cloud Studio')
     return
 
   player = @
@@ -22,7 +22,7 @@ registerPlugin 'ga', (options = {}) ->
   dataSetupOptions = {}
   if @options_["data-setup"]
     parsedOptions = JSON.parse(@options()["data-setup"])
-    dataSetupOptions = parsedOptions.ga if parsedOptions.ga
+    dataSetupOptions = parsedOptions.ga_gtm if parsedOptions.ga_gtm
 
   defaultsEventsToTrack = [
     'player_load', 'video_load', 'percent_played', 'start',
@@ -87,7 +87,7 @@ registerPlugin 'ga', (options = {}) ->
   # load ga script if in iframe and tracker option is set
   if window.location.host == 'players.brightcove.net' || window.location.host == 'preview-players.brightcove.net' || trackerName != '' 
     tracker = options.tracker || dataSetupOptions.tracker
-    if tracker
+    if tracker.indexOf("UA") > -1
       ((i, s, o, g, r, a, m) ->
         i["GoogleAnalyticsObject"] = r
         i[r] = i[r] or ->
@@ -104,7 +104,40 @@ registerPlugin 'ga', (options = {}) ->
       ) window, document, "script", "//www.google-analytics.com/analytics.js", "ga"
       ga('create', tracker, 'auto', options.trackerName)
       ga(trackerName + 'require', 'displayfeatures')
+    if tracker.indexOf("GTM") > -1
+      ((w, d, s, l, i) ->
+        w[l] = w[l] or []
+        w[l].push
+          'gtm.start': (new Date).getTime()
+          event: 'gtm.js'
+        f = d.getElementsByTagName(s)[0]
+        j = d.createElement(s)
+        dl = if l != 'dataLayer' then '&l=' + l else ''
+        j.async = true
+        j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl
+        f.parentNode.insertBefore j, f
+        return
+      ) window, document, 'script', 'dataLayer', tracker
+  # else
+    #  This is where we can do local testing, so not on the brightcove domain
+  #   tracker = options.tracker || dataSetupOptions.tracker
+  #   if tracker.indexOf("UA") > -1
+  #     ((i, s, o, g, r, a, m) ->
+  #       i["GoogleAnalyticsObject"] = r
+  #       i[r] = i[r] or ->
+  #         (i[r].q = i[r].q or []).push arguments
 
+  #       i[r].l = 1 * new Date()
+
+  #       a = s.createElement(o)
+  #       m = s.getElementsByTagName(o)[0]
+
+  #       a.async = 1
+  #       a.src = g
+  #       m.parentNode.insertBefore a, m
+  #     ) window, document, "script", "//www.google-analytics.com/analytics.js", "ga"
+  #     ga('create', tracker, 'auto', options.trackerName)
+  #     ga(trackerName + 'require', 'displayfeatures')
   adStateRegex = /(\s|^)vjs-ad-(playing|loading)(\s|$)/
   isInAdState = ( player ) =>
     return adStateRegex.test( player.el().className )
@@ -211,7 +244,6 @@ registerPlugin 'ga', (options = {}) ->
 
   sendbeacon = ( action, nonInteraction, value ) ->
     # videojs.log action, " ", nonInteraction, " ", value
-
     if sendbeaconOverride
       sendbeaconOverride(eventCategory, action, eventLabel, value, nonInteraction)
     else if window.ga
@@ -223,6 +255,13 @@ registerPlugin 'ga', (options = {}) ->
         'nonInteraction'  : nonInteraction
     else if window._gaq
       _gaq.push(['_trackEvent', eventCategory, action, eventLabel, value, nonInteraction])
+    else if window.dataLayer
+      dataLayer.push({
+          'event': 'video',
+          'eventCategory': eventCategory,
+          'eventAction': action,
+          'eventLabel': eventLabel
+      });
     else if options.debug
       videojs.log("Google Analytics not detected")
 
@@ -259,6 +298,13 @@ registerPlugin 'ga', (options = {}) ->
           'nonInteraction'  : true
       else if window._gaq
         _gaq.push(['_trackEvent', eventCategory, getEventName('player_load'), href, iframe, false])
+      else if window.dataLayer
+        dataLayer.push({
+            'event': 'video',
+            'eventCategory': eventCategory,
+            'eventAction': getEventName('player_load'),
+            'eventLabel': eventLabel
+        });
       else
         videojs.log("Google Analytics not detected")
 

@@ -1,17 +1,7 @@
-/*
-* videojs-ga-videocloud - v0.5.4 - 2018-10-07
-* Based on videojs-ga 0.4.2
-* https://github.com/BrightcoveOS/videojs-ga-videocloud
-* Copyright (c) 2018 Michael Bensoussan
-* Licensed MIT
-*/
 (function() {
-  var registerPlugin,
-    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+  var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
-  registerPlugin = videojs.registerPlugin || videojs.plugin;
-
-  registerPlugin('ga', function(options) {
+  videojs.plugin('ga_gtm', function(options) {
     var adStateRegex, currentVideo, dataSetupOptions, defaultLabel, defaultsEventsToTrack, end, endTracked, error, eventCategory, eventLabel, eventNames, eventsToTrack, fullscreen, getEventName, isInAdState, loaded, parsedOptions, pause, percentsAlreadyTracked, percentsPlayedInterval, play, player, referrer, resize, seekEnd, seekStart, seeking, sendbeacon, sendbeaconOverride, start, startTracked, timeupdate, tracker, trackerName, volumeChange,
       _this = this;
     if (options == null) {
@@ -20,15 +10,15 @@
     referrer = document.createElement('a');
     referrer.href = document.referrer;
     if (self !== top && window.location.host === 'preview-players.brightcove.net' && referrer.hostname === 'studio.brightcove.com') {
-      videojs.log('Google analytics plugin will not track events in Video Cloud Studio');
+      videojs.log('Google analytics - GTM plugin will not track events in Video Cloud Studio');
       return;
     }
     player = this;
     dataSetupOptions = {};
-    if (this.options_["data-setup"]) {
+    if (this.options()["data-setup"]) {
       parsedOptions = JSON.parse(this.options()["data-setup"]);
-      if (parsedOptions.ga) {
-        dataSetupOptions = parsedOptions.ga;
+      if (parsedOptions.ga_gtm) {
+        dataSetupOptions = parsedOptions.ga_gtm;
       }
     }
     defaultsEventsToTrack = ['player_load', 'video_load', 'percent_played', 'start', 'end', 'seek', 'play', 'pause', 'resize', 'volume_change', 'error', 'fullscreen'];
@@ -80,7 +70,7 @@
     };
     if (window.location.host === 'players.brightcove.net' || window.location.host === 'preview-players.brightcove.net' || trackerName !== '') {
       tracker = options.tracker || dataSetupOptions.tracker;
-      if (tracker) {
+      if (tracker.indexOf("UA") > -1) {
         (function(i, s, o, g, r, a, m) {
           i["GoogleAnalyticsObject"] = r;
           i[r] = i[r] || function() {
@@ -95,6 +85,22 @@
         })(window, document, "script", "//www.google-analytics.com/analytics.js", "ga");
         ga('create', tracker, 'auto', options.trackerName);
         ga(trackerName + 'require', 'displayfeatures');
+      }
+      if (tracker.indexOf("GTM") > -1) {
+        (function(w, d, s, l, i) {
+          var dl, f, j;
+          w[l] = w[l] || [];
+          w[l].push({
+            'gtm.start': (new Date).getTime(),
+            event: 'gtm.js'
+          });
+          f = d.getElementsByTagName(s)[0];
+          j = d.createElement(s);
+          dl = l !== 'dataLayer' ? '&l=' + l : '';
+          j.async = true;
+          j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+          f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', tracker);
       }
     }
     adStateRegex = /(\s|^)vjs-ad-(playing|loading)(\s|$)/;
@@ -219,6 +225,13 @@
         });
       } else if (window._gaq) {
         _gaq.push(['_trackEvent', eventCategory, action, eventLabel, value, nonInteraction]);
+      } else if (window.dataLayer) {
+        dataLayer.push({
+          'event': 'video',
+          'eventCategory': eventCategory,
+          'eventAction': action,
+          'eventLabel': eventLabel
+        });
       } else if (options.debug) {
         videojs.log("Google Analytics not detected");
       }
@@ -271,6 +284,13 @@
           });
         } else if (window._gaq) {
           return _gaq.push(['_trackEvent', eventCategory, getEventName('player_load'), href, iframe, false]);
+        } else if (window.dataLayer) {
+          return dataLayer.push({
+            'event': 'video',
+            'eventCategory': eventCategory,
+            'eventAction': getEventName('player_load'),
+            'eventLabel': eventLabel
+          });
         } else {
           return videojs.log("Google Analytics not detected");
         }
